@@ -6,7 +6,7 @@ const notes = require('./db/db.json');
 // A function that generates a string of random numbers and letters
 function uniqueID()
 {
-    Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
 }
 
 const PORT = 3001;
@@ -26,15 +26,42 @@ app.get('/notes', (req, res) => {
 });
 
 app.get('/api/notes', (req, res) => {
-    // Log our request to the terminal
-    console.info(`${req.method} request received to get reviews`);
-
-    // Sending all reviews to the client
     return res.status(200).json(notes);
 });
 
-app.get('/favicon.ico', (req, res) => {
-    console.info(`No favicon.`);
+app.post('/api/notes', (req, res) => {
+    const { title, text } = req.body;
+    console.log(req.body);
+
+    if (title && text) {
+        const newNote = {
+            title,
+            text,
+            id: uniqueID(),
+        };
+
+        fs.readFile('./db/db.json', 'utf8', (err, data) => {
+            if (err) {
+                console.error(err);
+            } else {
+                const parsedNotes = JSON.parse(data);
+
+                parsedNotes.push(newNote);
+
+                fs.writeFile(
+                    './db/db.json',
+                    JSON.stringify(parsedNotes, null, 4),
+                    (writeErr) =>
+                        writeErr
+                            ? console.error(writeErr)
+                            : res.json(parsedNotes)
+
+                );
+            }
+        });
+
+        // res.send(JSON.parse(notes));
+    }
 });
 
 app.get('*', (req, res) => {
